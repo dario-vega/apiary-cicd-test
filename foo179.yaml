@@ -1,0 +1,398 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: "Baggage Handling Demo"
+  description: This is a demo of Oracle NoSQL Database functionality.  These interfaes will be served on the back end by the Oracle NoSQL Database.  The demo emulates the types of questions that an airline passenger or an airline service representative might ask regarding the location of baggage
+  license:
+    name: MIT
+    url: https://github.com/apiaryio/polls-api/blob/master/LICENSE
+host: aynudqfa4hjvcrxlz7z6aydqye.apigateway.eu-frankfurt-1.oci.customer-oci.com
+basePath: /BaggageDemo
+schemes:
+- https
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /getLastBagLocation:
+    get:
+      summary: "Return all of the information known about a bag given its tag number"
+      parameters:
+        - in: query
+          name: tagNum
+          type: integer
+          required: true
+          description: The scanned tag number of the bag
+          x-example: 17657806298226
+      responses:
+        200:
+          description: Successful Response
+          schema:
+              $ref: '#/definitions/BagInfo'
+        204:
+          description: No Data found
+  /getPassengersForBagRoute:
+    get:
+      summary: "Given a bag route (a slash seperated list of airports like ALA/PSR/TLL), this interface will return a list of passengers that have bags destined for that route"
+      parameters:
+        - in: query
+          name: routing 
+          type: string
+          required: true
+          description: "A single airport code (e.g ALA) or a slash delimted route of airport codes (e.g. ALA/PSR/TLL)"
+          x-example: SFO/ORD/FRA
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PassengerInfo'
+        204:
+          description: No Data found
+  /getPassengersAffectedByAirport:
+    get:
+      summary: "Given an airport code (e.g. ORD), return a list of passengers that have bags either destined for that airport, or are routed through that airport"
+      parameters:
+        - in: query
+          name: airport
+          type: string
+          required: true
+          description: "A single airport code (e.g ORD)"
+          x-example: ORD
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PassengerInfo' 
+        204:
+          description: No Data found
+  /getPassengersAffectedByFlight:
+    get:
+      summary: "Given a flight number, return a list of passengers that have bags checked in for that flight"
+      parameters:
+        - in: query
+          name: flightNo
+          type: string
+          required: true
+          description: "A single flight number code (e.g EK352)"
+          x-example: BM706
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PassengerInfo'  
+        204:
+          description: No Data found
+  /getByFullName:
+    get:
+      summary: "Return all of the information known about a bag given a passenger full name (space seperated given name and family name)"
+      parameters:
+        - in: query
+          name: fullName
+          type: string
+          required: true
+          description: The given name and surname of the passenger
+          x-example: "Harry Hardy"
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BagInfo'  
+        204:
+          description: No Data found
+  /getBagInfoByTicketNumber:
+    get:
+      summary: "Return all of the information known about a bag given a ticket number"
+      parameters:
+        - in: query
+          name: ticketNo
+          type: string
+          required: true
+          description: The ticket number to which the bag is associated with
+          x-example: "1762389680140"
+      responses:
+        200:
+          description: Successful Response
+          schema:
+              $ref: '#/definitions/BagInfo'
+        204:
+          description: No Data found
+  /getRandomConfCodes:
+    get:
+      summary: "Return some random confirmation codes for the demo UI to use.  This should be used as a way to bootstrap the demo"
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ConfCode' 
+          examples:
+            application/json: [{"confCode":"KM2A2D"}, {"confCode":"GP7Y6K"}]
+        204:
+          description: No Data found
+  /getByConfirmationCode:
+    get:
+      summary: "Given a confirmation code for a reservation, this interface returns an array of bags that were checked in for the flight(s) associated with the reservation"
+      parameters:
+        - in: query
+          name: confNo
+          type: string
+          required: true
+          description: The confirmation code for the reservation
+          x-example: "AU3J3M"
+      responses:
+        200:
+          description: Successful Response
+          schema:
+              $ref: '#/definitions/BagInfo'  
+        204:
+          description: No Data found
+  /getMyTripInfo:
+    get:
+      summary: "Given a confirmation code for a reservation, this interface returns information about the booked trip"
+      parameters:
+        - in: query
+          name: confNo
+          type: string
+          required: true
+          description: The confirmation code for the reservation
+          x-example: "AU3J3M"
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/TripInfo'  
+        204:
+          description: No Data found
+definitions:
+  BagInfo:
+    title: BagInfo
+    type: object
+    properties:
+      tagNum:
+        type: string
+        description: The scanned tag number of the bag
+        example: 79039899150692
+      fullName:
+        type: string
+        description: The name of the passenger this bag was checked in under
+        example: Daniela Shake
+      ticketNo:
+        type: string
+        description: The ticket number associated with the bag
+        example: 1762353661809
+      gender:
+        type: string
+        description: The gender of the passenger (M or F)
+        example: F
+      bagID:
+        type: string
+        description: Generated bag ID number (DV missing in examples)
+        example: 790398991129
+      routing:
+        type: array
+        items:
+          $ref: '#/definitions/RouteInfo'    
+        description: The route this bag is taking.  NOTE that the bag travels from the zero'th array entry to the last array entry
+      actions:
+        type: array
+        items:
+          $ref: '#/definitions/ActionDescriptor'    
+        description: A number of actions that have occurred during this part of the route
+      lastActionCode:
+        type: string
+        description: Internal code of the last action performed on this bag
+        example: OFFLOAD
+      lastActionDesc:
+        type: string
+        description: Description of the last action performed on this bag
+        example: Offloaded at D19W
+      lastSeenLocation:
+        type: object
+        $ref: '#/definitions/RouteInfoOrig'  
+        description: The place where the bag was last seen
+        example: ALA
+      lastSeenTimeGmt:
+        type: string
+        description: The time when the bag was last seen
+        example: 2019-03-01T:10:00
+  PassengerInfo:
+    title: PassengerIno
+    type: object
+    properties:
+      ticketNo:
+        type: string
+        description: The ticket number for the journey associated with the bag
+        example: 1762353661809
+      numBags:
+        type: integer
+        description: The number of bags that this passenger has checked
+        example: 1
+      fullName:
+        type: string
+        description: The name of the passenger this bag was checked in under
+        example: Daniela Shake
+      contactInfo: 
+        type: string
+        description: Contact information for the passenger
+        example: 895-296-1318
+  RouteInfo:
+    title: RouteInfo
+    type: object
+    properties:
+      flightNumber:
+        type: string
+        description: The flight number of this flight in the bag route.  If this entry represents the last flight in the route then the flight number will be JSON null
+        example: BM148
+      departureAirportCode:
+        type: string
+        description: The airport code of where the flight departs from
+        example: CWD
+      departureAirportName:
+        type: string
+        description: The name of airport  of where the flight departs from
+        example: John F Kennedy International Airport
+      departureAirportCity:
+        type: string
+        description: The city of where the flight departs from
+        example: New York
+      departureAirportState:
+        type: string
+        description: The state or region of where the flight departs from
+        example: New York
+      arrivalAirportCode:
+        type: string
+        description: The airport code of where the flight lands 
+        example: SFO
+      arrivalAirportName:
+        type: string
+        description: The name of airportof where the flight will arrive
+        example: O'hare International Airport
+      arrivalAirportCity:
+        type: string
+        description: The city of where the flight will arrive
+        example: Chicago
+      arrivalAirportState:
+        type: string
+        description: The state or region of where the flight will arrive
+        example: Illinois
+  RouteInfoOrig:
+    title: RouteInfo
+    type: object
+    properties:
+      flightNumber:
+        type: string
+        description: The flight number of this flight in the bag route (DV missing in examples)
+        example: BM148
+      airportCode:
+        type: string
+        description: The three letter airport code
+        example: ORD
+      airportName: 
+        type: string
+        description: The name of airport associated with the airport code
+        example: Ohare International Airport
+      airportLocation:
+        type: string
+        description: The city, state, or locality of where the aiprort is located
+        example: Chicago, Illinois
+  ActionDescriptor:
+    title: ActionDescriptor
+    type: object
+    properties:
+      actionInfo: 
+        type: string
+        description: The type of action that happened to a bag or the passenger 
+        example: Checkin at ORD, Offload at SFO
+      actionTime:
+        type: string
+        description: The time that the action occurred in the local time zone
+        example: "2019.02.23 at 17:06:00 ICT"
+      airportCode:
+        type: string
+        description: The three letter airport code
+        example: ORD
+      airportName: 
+        type: string
+        description: The name of airport associated with the airport code
+        example: Ohare International Airport
+      airportCity:
+        type: string
+        description: The city, or locality of where the aiprort is located
+        example: Chicago 
+      airportState:
+        type: string
+        description: The state, or region of where the aiprort is located
+        example: Illinois 
+  TripInfo:
+    title: TripInfo
+    type: object
+    properties:
+      flightNumber:
+        type: string
+        description: The flight number of this flight in the trip.  If this entry represents the last flight in the route then the flight number will be JSON null
+        example: BM148
+      flightDepartureTime: 
+        type: string
+        description: ISO 8601 formatted GMT date of this flight
+        example: 2019-03-18T:06:00
+      estimatedArrivalTime: 
+        type: string
+        description: ISO 8601 formatted GMT date for estimated arrival
+        example: 2019-03-18T:06:00
+      departureAirportCode:
+        type: string
+        description: The three letter airport code of this leg of the trip
+        example: ORD
+      departureAirportName: 
+        type: string
+        description: The name of airport associated with the airport code
+        example: Ohare International Airport
+      departureAirportCity:
+        type: string
+        description: The city locality of where the aiprort is located
+        example: Chicago
+      departureAirportRegion:
+        type: string
+        description: The regional locality of where the aiprort is located
+        example: Illinois
+      arrivalAirportCode:
+        type: string
+        description: The three letter airport code of this leg of the trip
+        example: ORD
+      arrivalAirportName: 
+        type: string
+        description: The name of airport associated with the airport code
+        example: Ohare International Airport
+      arrivalAirportCity:
+        type: string
+        description: The city of where the aiprort is located
+        example: San Francisco
+      arrivalAirportRegion:
+        type: string
+        description: The regionallocality of where the aiport is located
+        example: California
+      bagArrivalArea:
+        type: string
+        description: The carousel or bag pickup area where the passenger can find their bag
+        example: Bagage Area 8
+  ConfCode:
+    title: ConfCode
+    type: object
+    properties:
+      confCode:
+        type: string
+        description: The confirmation code for a trip, which is composed of one or more flight legs
+        example: KM2A2D
+ 
